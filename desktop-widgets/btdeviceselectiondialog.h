@@ -11,6 +11,8 @@
 
 #if defined(Q_OS_WIN)
 	#include <QThread>
+	#include <QMutex>
+	#include <QWaitCondition>
 	#include <winsock2.h>
 	#include <ws2bth.h>
 
@@ -40,14 +42,20 @@ public:
 	bool isActive() const;
 	QString errorToString() const;
 	QBluetoothDeviceDiscoveryAgent::Error error() const;
-	virtual void run();
-	virtual void stop();
+	void run();
+	void start();
+	void stop();
 
 private:
-	bool running;
-	bool stopped;
+	void doWork();
+
+	mutable QMutex lock;
+	mutable QWaitCondition cond;
+	bool stopped;			// If true, don't scan
+	bool quit;			// If true, exit thread
 	QString lastErrorToString;
 	QBluetoothDeviceDiscoveryAgent::Error lastError;
+	void reportError(QBluetoothDeviceDiscoveryAgent::Error errorCode);
 };
 #endif
 
